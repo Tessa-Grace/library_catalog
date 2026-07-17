@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "library-catalog"
+version = "0.1.0"
+description = ""
+authors = ["[Tessa] <[tessagerasimova@gmail.com]>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.139.2"
+uvicorn = {extras = ["standard"], version = "^0.51.0"}
+sqlalchemy = "^2.0.51"
+alembic = "^1.18.5"
+asyncpg = "^0.31.0"
+pydantic = "^2.13.4"
+pydantic-settings = "^2.14.2"
+httpx = "^0.28.1"
+python-dotenv = "^1.2.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^9.1.1"
+pytest-asyncio = "^1.4.0"
+black = "^26.5.1"
+ruff = "^0.15.22"
+mypy = "^2.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
