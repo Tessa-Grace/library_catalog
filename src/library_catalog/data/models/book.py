@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String
+from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -27,6 +27,8 @@ class Book(Base):
         pages (int): Количество страниц
         available (bool): Доступна ли книга для выдачи
         isbn (str/None): Международный стандартный номер книги
+        description (str | None): Описание книги
+        extra (dict | None): Дополнительные данные
         created_at (datetime): Дата создания записи
         updated_at (datetime): Дата последнего обновления
     """
@@ -80,16 +82,26 @@ class Book(Base):
         index=True,
     )
 
+    description: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    extra: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        default=func.now(),
         nullable=False,
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=func.now(),
+        onupdate=func.now(),
         nullable=False,
     )
 

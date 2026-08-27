@@ -1,4 +1,4 @@
-from typing import AsyncGenerator
+from typing import AsyncGenerator  # noqa: UP035
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
