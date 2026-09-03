@@ -62,7 +62,7 @@ async def run_async_migrations() -> None:
     """Run migrations in 'online' mode with async engine."""
     # Создать async engine из конфигурации
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        {"sqlalchemy.url": config.get_main_option("sqlalchemy.url")},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
