@@ -133,3 +133,7 @@ dmypy.json
 .deployment
 
 .idea
+
+# etc
+advanced_patterns_guide.md
+DETAILED_ASSIGNMENT_FIXED.md

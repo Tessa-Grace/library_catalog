@@ -1,11 +1,14 @@
-from pydantic import PostgresDsn
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+from typing import Literal
+
+from pydantic import PostgresDsn
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class Settings(BaseSettings):
     app_name: str = "Library Catalog API"
-    environment: Literal["development", "staging", "production"]
-    debug: bool
+    environment: Literal["development", "staging", "production"] = "development" 
+    debug: bool = False
     database_url: PostgresDsn
     database_pool_size: int = 20
     api_v1_prefix: str = "/api/v1"
