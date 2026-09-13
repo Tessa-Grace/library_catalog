@@ -29,6 +29,7 @@ class BaseRepository(Generic[T]):
         instance = await self.session.get(self.model, id)
         if instance is None:
             return None
+        return instance
     
     async def update(self, id: UUID, **kwargs) -> T | None:
         """Обновить запись."""
