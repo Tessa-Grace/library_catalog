@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.book import Book
@@ -53,7 +53,7 @@ class BookRepository(BaseRepository[Book]):
         available: bool | None = None,
     ) -> int:
         """Подсчитать количество книг по фильтрам."""
-        res = select(self.model).count()
+        res = select(func.count()).select_from(self.model)
         
         if title:
             res = res.where(self.model.title.ilike(f"%{title}%"))
