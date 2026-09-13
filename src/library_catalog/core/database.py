@@ -10,8 +10,8 @@ class Base(DeclarativeBase):
     pass
 
 # Создать engine
-engine = create_async_engine(str(
-    settings.database_url),
+engine = create_async_engine(
+    str(settings.database_url),
     pool_size=settings.database_pool_size,
     echo=settings.debug,
 )
@@ -22,6 +22,10 @@ async_session_maker = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
 )
+
+async def dispose_engine() -> None:
+    """Закрыть все соединения с БД."""
+    await engine.dispose()
 
 # Dependency для FastAPI
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
