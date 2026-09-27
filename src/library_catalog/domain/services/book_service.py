@@ -1,11 +1,19 @@
+import logging
 from uuid import UUID
 
 from ...api.v1.schemas.book import BookCreate, BookUpdate, ShowBook
 from ...data.repositories.book_repository import BookRepository
 from ...external.openlibrary.client import OpenLibraryClient
-from ..exceptions import *
+from ..exceptions import (
+    BookAlreadyExistsException,
+    BookNotFoundException,
+    InvalidPagesException,
+    InvalidYearException,
+    OpenLibraryException,
+)
 from ..mappers.book_mapper import BookMapper
 
+logger = logging.getLogger(__name__)
 
 class BookService:
     """
@@ -42,6 +50,10 @@ class BookService:
             InvalidPagesException: Если страницы <= 0
             BookAlreadyExistsException: Если ISBN уже существует
         """
+        logger.info(
+            "Creating book",
+            extra={"title": book_data.title, "author": book_data.author},
+        )
         # 1. Валидация бизнес-правил
         self._validate_book_data(book_data)
         
@@ -76,6 +88,11 @@ class BookService:
         Raises:
             BookNotFoundException: Если книга не найдена
         """
+        logger.debug(
+            "Fetching book",
+            extra={"book_id": str(book_id)}
+        )
+
         book = await self.book_repo.get_by_id(book_id)
         if book is None:
             raise BookNotFoundException(book_id)
@@ -92,6 +109,13 @@ class BookService:
         
         Обновляются только переданные поля.
         """
+        logger.info(
+            "Updating book",
+            extra={
+                "book_id": str(book_id),
+                "fields": list(book_data.model_dump(exclude_unset=True).keys()),
+            },
+        )
         # Проверить существование
         existing = await self.book_repo.get_by_id(book_id)
         if existing is None:
@@ -108,7 +132,10 @@ class BookService:
             book_id,
             **book_data.dict(exclude_unset=True)
         )
-        
+        logger.info(
+            "Book updated",
+            extra={"book_id": str(book_id)}
+        )
         return BookMapper.to_show_book(updated)
     
     async def delete_book(self, book_id: UUID) -> None:
@@ -118,6 +145,11 @@ class BookService:
         Raises:
             BookNotFoundException: Если книга не найдена
         """
+        logger.info(
+            "Deleting book",
+            extra={"book_id": str(book_id)}
+        )
+
         deleted = await self.book_repo.delete(book_id)
         if not deleted:
             raise BookNotFoundException(book_id)
@@ -138,6 +170,16 @@ class BookService:
         Returns:
             tuple: (список книг, общее количество)
         """
+        logger.debug(
+            "Searching books",
+            extra={
+                "title": title,
+                "author": author,
+                "genre": genre,
+                "year": year,
+                "available": available,
+            },
+        )
         # Получить книги
         books = await self.book_repo.find_by_filters(
             title=title,
@@ -157,7 +199,12 @@ class BookService:
             year=year,
             available=available,
         )
-        
+        logger.info(
+            "Books found",
+            extra={
+                "count": len(books),
+                "total": total},
+        )
         return BookMapper.to_show_books(books), total
     
     # ========== ПРИВАТНЫЕ МЕТОДЫ ==========

@@ -49,11 +49,7 @@ async def create_book(
 async def get_books(
     service: BookServiceDep,
     pagination: Annotated[PaginationParams, Depends()],
-    title: str | None = Query(None, description="Поиск по названию"),
-    author: str | None = Query(None, description="Поиск по автору"),
-    genre: str | None = Query(None, description="Фильтр по жанру"),
-    year: int | None = Query(None, description="Фильтр по году"),
-    available: bool | None = Query(None, description="Фильтр по доступности"),
+    filters: Annotated[BookFilters, Depends()],
 ):
     """
     Получить список книг с фильтрацией.
@@ -70,11 +66,11 @@ async def get_books(
     - page_size: размер страницы (1-100, по умолчанию 20)
     """
     books, total = await service.search_books(
-        title=title,
-        author=author,
-        genre=genre,
-        year=year,
-        available=available,
+        title=filters.title,
+        author=filters.author,
+        genre=filters.genre,
+        year=filters.year,
+        available=filters.available,
         limit=pagination.limit,
         offset=pagination.offset,
     )
