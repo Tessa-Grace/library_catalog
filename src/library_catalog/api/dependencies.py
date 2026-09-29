@@ -1,10 +1,8 @@
-from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.config import settings
 from ..core.database import get_db
 from ..data.repositories.book_repository import BookRepository
 from ..domain.services.book_service import BookService
@@ -12,17 +10,13 @@ from ..external.openlibrary.client import OpenLibraryClient
 
 # ========== EXTERNAL CLIENTS (Singletons) ==========
 
-@lru_cache
-def get_openlibrary_client() -> OpenLibraryClient:
+def get_openlibrary_client(request: Request) -> OpenLibraryClient:
     """
-    Получить singleton OpenLibraryClient.
+    Получить OpenLibraryClient из app.state.
     
-    lru_cache создает клиент один раз и переиспользует.
+    Клиент создаётся один раз в lifespan и хранится в app.state.
     """
-    return OpenLibraryClient(
-        base_url=settings.openlibrary_base_url,
-        timeout=settings.openlibrary_timeout,
-    )
+    return request.app.state.openlibrary_client
 
 
 # ========== REPOSITORIES ==========

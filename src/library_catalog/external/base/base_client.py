@@ -1,10 +1,5 @@
-<<<<<<< Updated upstream
-import logging
-import time
-=======
 import asyncio
 import logging
->>>>>>> Stashed changes
 from abc import ABC, abstractmethod
 
 import httpx
@@ -27,13 +22,22 @@ class BaseApiClient(ABC):
         timeout: float = 10.0,
         retries: int = 3,
         backoff: float = 0.5,
+        max_connections: int = 20,
+        max_keepalive_connections: int = 10,
     ):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.retries = retries
         self.backoff = backoff
-        self._client = httpx.AsyncClient(timeout=self.timeout)
+        self._client = httpx.AsyncClient(
+            timeout=self.timeout,
+            limits=self._limits,
+        )
         self.logger = logging.getLogger(self.client_name())
+        self._limits = httpx.Limits(
+            max_connections=max_connections,
+            max_keepalive_connections=max_keepalive_connections,
+        )
     
     @abstractmethod
     def client_name(self) -> str:
@@ -85,22 +89,14 @@ class BaseApiClient(ABC):
                 
                 wait_time = self.backoff * (2 ** attempt)
                 self.logger.warning(f"Timeout, retrying in {wait_time}s...")
-<<<<<<< Updated upstream
-                time.sleep(wait_time)
-=======
                 await asyncio.sleep(wait_time)
->>>>>>> Stashed changes
             
             except httpx.HTTPStatusError as e:
                 # 5xx ошибки - retry
                 if e.response.status_code >= 500 and attempt < self.retries - 1:
                     wait_time = self.backoff * (2 ** attempt)
                     self.logger.warning(f"Server error, retrying in {wait_time}s...")
-<<<<<<< Updated upstream
-                    time.sleep(wait_time)
-=======
                     await asyncio.sleep(wait_time)
->>>>>>> Stashed changes
                 else:
                     self.logger.error(f"HTTP error: {e}")
                     raise

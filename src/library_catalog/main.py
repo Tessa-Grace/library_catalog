@@ -14,6 +14,7 @@ from .core.config import settings
 from .core.database import dispose_engine
 from .core.exceptions import register_exception_handlers
 from .core.logging_config import setup_logging
+from .external.openlibrary.client import OpenLibraryClient
 
 # ========== LIFECYCLE EVENTS ==========
 
@@ -32,6 +33,13 @@ async def lifespan(app: FastAPI):
     setup_logging()
     logger.info("🚀 Application started")
     
+    # Создать OpenLibraryClient
+    app.state.openlibrary_client = OpenLibraryClient(
+        base_url=settings.openlibrary_base_url,
+        timeout=settings.openlibrary_timeout,
+    )
+    logger.info("OpenLibraryClient created")
+
     yield
     
     # Shutdown

@@ -11,8 +11,15 @@ class OpenLibraryClient(BaseApiClient):
         self,
         base_url: str = "https://openlibrary.org",
         timeout: float = 10.0,
+        max_connections: int = 20,
+        max_keepalive_connections: int = 10,
     ):
-        super().__init__(base_url, timeout=timeout)
+        super().__init__(
+            base_url,
+            timeout=timeout,
+            max_connections=max_connections,
+            max_keepalive_connections=max_keepalive_connections,
+        )
     
     def client_name(self) -> str:
         return "openlibrary"

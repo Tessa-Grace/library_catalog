@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["*"]
     openlibrary_base_url: str = "https://openlibrary.org"
     openlibrary_timeout: float = 10.0
+    openlibrary_max_connections: int = 20
+    openlibrary_max_keepalive: int = 10
     
     model_config = SettingsConfigDict(
         env_file=".env",
