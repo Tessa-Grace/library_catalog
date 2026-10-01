@@ -3,6 +3,8 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from ..api.middleware import request_id_var
+
 logger = logging.getLogger(__name__) 
 
 class AppException(Exception):
@@ -32,11 +34,15 @@ def register_exception_handlers(app: FastAPI) -> None:
     
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
+        """Обработчик непредвиденных исключений."""
+        
         logger.error(
             f"Unhandled exception: {exc}",
+            exc_info=True,
             extra={
                 "path": request.url.path,
                 "method": request.method,
+                "request_id": request_id_var.get() or "-",
             },
         )
         return JSONResponse(

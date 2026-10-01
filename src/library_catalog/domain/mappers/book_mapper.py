@@ -1,22 +1,14 @@
-from ...api.v1.schemas.book import ShowBook
 from ...data.models.book import Book
+from ..schemas.book import BookDTO
 
 
 class BookMapper:
-    """Маппер для преобразования Book entity в DTO."""
+    """Маппер для преобразования ORM-модели Book в Domain DTO."""
     
     @staticmethod
-    def to_show_book(book: Book) -> ShowBook:
-        """
-        Преобразовать Book ORM модель в ShowBook DTO.
-        
-        Args:
-            book: ORM модель из БД
-            
-        Returns:
-            ShowBook: Pydantic модель для API
-        """
-        return ShowBook(
+    def to_book_dto(book: Book) -> BookDTO:
+        """Преобразовать Book ORM модель в BookDTO."""
+        return BookDTO(
             book_id=book.book_id,
             title=book.title,
             author=book.author,
@@ -32,6 +24,7 @@ class BookMapper:
         )
     
     @staticmethod
-    def to_show_books(books: list[Book]) -> list[ShowBook]:
-        """Преобразовать список книг."""
-        return [BookMapper.to_show_book(book) for book in books]
+    def to_book_dtos(books: list[Book]) -> list[BookDTO]:
+        """Преобразовать список ORM-моделей в список DTO."""
+        return [BookMapper.to_book_dto(book) for book in books]
+
