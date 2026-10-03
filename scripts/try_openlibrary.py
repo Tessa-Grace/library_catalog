@@ -1,9 +1,10 @@
 # test_ol_client.py
 import asyncio
+
 from src.library_catalog.external.openlibrary.client import OpenLibraryClient
 
 
-async def test():
+async def main():
     client = OpenLibraryClient()
     
     # Тест по ISBN
@@ -23,4 +24,4 @@ async def test():
 
 
 if __name__ == "__main__":
-    asyncio.run(test())
+    asyncio.run(main())

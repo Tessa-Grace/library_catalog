@@ -1,8 +1,9 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, status
 
+from ....domain.schemas.book import BookCreateDTO, BookUpdateDTO
 from ...dependencies import BookServiceDep
 from ..schemas.book import (
     BookCreate,
@@ -37,7 +38,14 @@ async def create_book(
     
     Если Open Library недоступен, книга все равно будет создана.
     """
-    return await service.create_book(book_data)
+    # 1. API → Domain
+    dto = BookCreateDTO(**book_data.model_dump())
+    
+    # 2. Domain
+    book_dto = await service.create_book(dto)
+    
+    # 3. Domain → API
+    return ShowBook(**book_dto.model_dump())
 
 
 @router.get(
@@ -49,11 +57,7 @@ async def create_book(
 async def get_books(
     service: BookServiceDep,
     pagination: Annotated[PaginationParams, Depends()],
-    title: str | None = Query(None, description="Поиск по названию"),
-    author: str | None = Query(None, description="Поиск по автору"),
-    genre: str | None = Query(None, description="Фильтр по жанру"),
-    year: int | None = Query(None, description="Фильтр по году"),
-    available: bool | None = Query(None, description="Фильтр по доступности"),
+    filters: Annotated[BookFilters, Depends()],
 ):
     """
     Получить список книг с фильтрацией.
@@ -69,18 +73,20 @@ async def get_books(
     - page: номер страницы (начиная с 1)
     - page_size: размер страницы (1-100, по умолчанию 20)
     """
-    books, total = await service.search_books(
-        title=title,
-        author=author,
-        genre=genre,
-        year=year,
-        available=available,
+    books_dto, total = await service.search_books(
+        title=filters.title,
+        author=filters.author,
+        genre=filters.genre,
+        year=filters.year,
+        available=filters.available,
         limit=pagination.limit,
         offset=pagination.offset,
     )
     
+    # Domain → API
+    books = [ShowBook(**dto.model_dump()) for dto in books_dto]
+    
     return PaginatedResponse.create(books, total, pagination)
-
 
 @router.get(
     "/{book_id}",
@@ -101,7 +107,8 @@ async def get_book(
     Raises:
         404: Книга не найдена
     """
-    return await service.get_book(book_id)
+    book_dto = await service.get_book(book_id)
+    return ShowBook(**book_dto.model_dump())
 
 
 @router.patch(
@@ -128,7 +135,14 @@ async def update_book(
         404: Книга не найдена
         400: Невалидные данные
     """
-    return await service.update_book(book_id, book_data)
+    # API → Domain
+    dto = BookUpdateDTO(**book_data.model_dump(exclude_unset=True))
+    
+    # Domain
+    book_dto = await service.update_book(book_id, dto)
+    
+    # Domain → API
+    return ShowBook(**book_dto.model_dump())
 
 
 @router.delete(

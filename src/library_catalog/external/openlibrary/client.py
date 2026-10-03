@@ -11,8 +11,15 @@ class OpenLibraryClient(BaseApiClient):
         self,
         base_url: str = "https://openlibrary.org",
         timeout: float = 10.0,
+        max_connections: int = 20,
+        max_keepalive_connections: int = 10,
     ):
-        super().__init__(base_url, timeout=timeout)
+        super().__init__(
+            base_url,
+            timeout=timeout,
+            max_connections=max_connections,
+            max_keepalive_connections=max_keepalive_connections,
+        )
     
     def client_name(self) -> str:
         return "openlibrary"
@@ -110,10 +117,8 @@ class OpenLibraryClient(BaseApiClient):
         result = {}
         
         # Cover URL
-        if cover_id := doc.get("cover_i"):
-            result["cover_url"] = (
-                f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
-            )
+        if cover_url := self._get_cover_url(doc.get("cover_i")):
+            result["cover_url"] = cover_url
         
         # Subjects (темы)
         if subjects := doc.get("subject"):

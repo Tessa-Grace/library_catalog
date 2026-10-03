@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 T = TypeVar('T')
 
 class BaseRepository(Generic[T]):
+    updatable_fields: set[str] = set()
+
     def __init__(self, session: AsyncSession, model: type[T]):
         self.session = session
         self.model = model
@@ -38,6 +40,8 @@ class BaseRepository(Generic[T]):
             return None
         
         for key, value in kwargs.items():
+            if key not in self.updatable_fields:
+                raise ValueError(f"Field '{key}' cannot be updated")
             setattr(instance, key, value)
 
         await self.session.commit()

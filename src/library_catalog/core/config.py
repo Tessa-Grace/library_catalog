@@ -15,18 +15,33 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     docs_url: str = "/docs"
     redoc_url: str = "/redoc"
-    cors_origins: list[str] = ["*"]
     openlibrary_base_url: str = "https://openlibrary.org"
     openlibrary_timeout: float = 10.0
-    
+    openlibrary_max_connections: int = 20
+    openlibrary_max_keepalive: int = 10
+    cors_allowed_origins: list[str] = ["http://localhost:3000"]
+    api_key: str
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,
+        extra="ignore",
     )
+    
     
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+    
+    @property
+    def cors_origins(self) -> list[str]:
+        if self.environment == "development":
+            return ["*"]
+        return self.cors_allowed_origins
+    
+    @property
+    def cors_allow_credentials(self) -> bool:
+        """Credentials только если не wildcard."""
+        return self.environment != "development"
 
 @lru_cache
 def get_settings() -> Settings:

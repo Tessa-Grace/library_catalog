@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OpenLibrarySearchDoc(BaseModel):
@@ -11,9 +11,7 @@ class OpenLibrarySearchDoc(BaseModel):
     publisher: list[str] | None = None
     language: list[str] | None = None
     ratings_average: float | None = Field(None, alias="ratings_average")
-    
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class OpenLibrarySearchResponse(BaseModel):

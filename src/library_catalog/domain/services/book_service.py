@@ -1,11 +1,20 @@
+import logging
 from uuid import UUID
 
-from ...api.v1.schemas.book import BookCreate, BookUpdate, ShowBook
 from ...data.repositories.book_repository import BookRepository
 from ...external.openlibrary.client import OpenLibraryClient
-from ..exceptions import *
+from ..exceptions import (
+    BookAlreadyExistsException,
+    BookNotFoundException,
+    InvalidPagesException,
+    InvalidYearException,
+    OpenLibraryException,
+    OpenLibraryTimeoutException,
+)
 from ..mappers.book_mapper import BookMapper
+from ..schemas.book import BookCreateDTO, BookDTO, BookUpdateDTO
 
+logger = logging.getLogger(__name__)
 
 class BookService:
     """
@@ -22,7 +31,7 @@ class BookService:
         self.book_repo = book_repository
         self.ol_client = openlibrary_client
     
-    async def create_book(self, book_data: BookCreate) -> ShowBook:
+    async def create_book(self, book_data: BookCreateDTO) -> BookDTO: 
         """
         Создать новую книгу с обогащением из Open Library.
         
@@ -42,6 +51,10 @@ class BookService:
             InvalidPagesException: Если страницы <= 0
             BookAlreadyExistsException: Если ISBN уже существует
         """
+        logger.info(
+            "Creating book",
+            extra={"title": book_data.title, "author": book_data.author},
+        )
         # 1. Валидация бизнес-правил
         self._validate_book_data(book_data)
         
@@ -67,31 +80,43 @@ class BookService:
         )
         
         # 5. Маппинг в DTO
-        return BookMapper.to_show_book(book)
+        return BookMapper.to_book_dto(book)
     
-    async def get_book(self, book_id: UUID) -> ShowBook:
+    async def get_book(self, book_id: UUID) -> BookDTO:
         """
         Получить книгу по ID.
         
         Raises:
             BookNotFoundException: Если книга не найдена
         """
+        logger.debug(
+            "Fetching book",
+            extra={"book_id": str(book_id)}
+        )
+
         book = await self.book_repo.get_by_id(book_id)
         if book is None:
             raise BookNotFoundException(book_id)
         
-        return BookMapper.to_show_book(book)
+        return BookMapper.to_book_dto(book)
     
     async def update_book(
         self,
         book_id: UUID,
-        book_data: BookUpdate,
-    ) -> ShowBook:
+        book_data: BookUpdateDTO,
+    ) -> BookDTO:
         """
         Обновить книгу.
         
         Обновляются только переданные поля.
         """
+        logger.info(
+            "Updating book",
+            extra={
+                "book_id": str(book_id),
+                "fields": list(book_data.model_dump(exclude_unset=True).keys()),
+            },
+        )
         # Проверить существование
         existing = await self.book_repo.get_by_id(book_id)
         if existing is None:
@@ -106,10 +131,13 @@ class BookService:
         # Обновить
         updated = await self.book_repo.update(
             book_id,
-            **book_data.dict(exclude_unset=True)
+            **book_data.model_dump(exclude_unset=True)
         )
-        
-        return BookMapper.to_show_book(updated)
+        logger.info(
+            "Book updated",
+            extra={"book_id": str(book_id)}
+        )
+        return BookMapper.to_book_dto(updated)
     
     async def delete_book(self, book_id: UUID) -> None:
         """
@@ -118,6 +146,11 @@ class BookService:
         Raises:
             BookNotFoundException: Если книга не найдена
         """
+        logger.info(
+            "Deleting book",
+            extra={"book_id": str(book_id)}
+        )
+
         deleted = await self.book_repo.delete(book_id)
         if not deleted:
             raise BookNotFoundException(book_id)
@@ -131,13 +164,23 @@ class BookService:
         available: bool | None = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> tuple[list[ShowBook], int]:
+    ) -> tuple[list[BookDTO], int]:
         """
         Поиск книг с фильтрацией и пагинацией.
         
         Returns:
             tuple: (список книг, общее количество)
         """
+        logger.debug(
+            "Searching books",
+            extra={
+                "title": title,
+                "author": author,
+                "genre": genre,
+                "year": year,
+                "available": available,
+            },
+        )
         # Получить книги
         books = await self.book_repo.find_by_filters(
             title=title,
@@ -157,12 +200,17 @@ class BookService:
             year=year,
             available=available,
         )
-        
-        return BookMapper.to_show_books(books), total
+        logger.info(
+            "Books found",
+            extra={
+                "count": len(books),
+                "total": total},
+        )
+        return BookMapper.to_book_dtos(books), total
     
     # ========== ПРИВАТНЫЕ МЕТОДЫ ==========
     
-    def _validate_book_data(self, data: BookCreate) -> None:
+    def _validate_book_data(self, data: BookCreateDTO) -> None:
         """Валидация бизнес-правил для новой книги."""
         self._validate_year(data.year)
         self._validate_pages(data.pages)
@@ -182,7 +230,7 @@ class BookService:
     
     async def _enrich_book_data(
         self,
-        book_data: BookCreate
+        book_data: BookCreateDTO
     ) -> dict | None:
         """
         Обогатить данные книги из Open Library.
@@ -196,10 +244,7 @@ class BookService:
                 isbn=book_data.isbn,
             )
             return extra if extra else None
-        except OpenLibraryException:
-            # Логируем но не прерываем создание книги
-            import logging
-            logger = logging.getLogger(__name__)
+        except (OpenLibraryException, OpenLibraryTimeoutException):
             logger.warning(
                 "Failed to enrich book data from Open Library",
                 extra={"title": book_data.title, "author": book_data.author}
