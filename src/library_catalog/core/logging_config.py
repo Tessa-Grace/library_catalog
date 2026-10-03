@@ -8,15 +8,15 @@ class RequestIDFilter(logging.Filter):
         record.request_id = request_id_var.get() or "-"
         return True
 
-    def setup_logging() -> None:
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - [%(request_id)s] - %(message)s"
-        )
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-        handler.addFilter(RequestIDFilter())
+def setup_logging() -> None:
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - [%(request_id)s] - %(message)s"
+    )
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    handler.addFilter(RequestIDFilter())
 
-        root = logging.getLogger()
-        root.setLevel(logging.INFO)
-        root.handlers.clear()  # убираем старые
-        root.addHandler(handler)
+    root = logging.getLogger()
+    root.setLevel(logging.log_level)
+    root.handlers.clear()
+    root.addHandler(handler)

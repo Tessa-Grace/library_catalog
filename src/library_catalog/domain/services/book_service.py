@@ -9,6 +9,7 @@ from ..exceptions import (
     InvalidPagesException,
     InvalidYearException,
     OpenLibraryException,
+    OpenLibraryTimeoutException,
 )
 from ..mappers.book_mapper import BookMapper
 from ..schemas.book import BookCreateDTO, BookDTO, BookUpdateDTO
@@ -243,7 +244,7 @@ class BookService:
                 isbn=book_data.isbn,
             )
             return extra if extra else None
-        except OpenLibraryException:
+        except (OpenLibraryException, OpenLibraryTimeoutException):
             logger.warning(
                 "Failed to enrich book data from Open Library",
                 extra={"title": book_data.title, "author": book_data.author}

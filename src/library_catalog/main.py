@@ -5,9 +5,10 @@ Library Catalog API - Точка входа приложения.
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api.dependencies import verify_api_key
 from .api.middleware import RequestIDMiddleware
 from .api.v1.routers import books, health
 from .core.config import settings
@@ -43,6 +44,7 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
+    await app.state.openlibrary_client.close()
     await dispose_engine()
     logger.info("👋 Application stopped")
 
@@ -79,6 +81,7 @@ register_exception_handlers(app)
 app.include_router(
     books.router,
     prefix=settings.api_v1_prefix,
+    dependencies=[Depends(verify_api_key)],
 )
 app.include_router(
     health.router,
@@ -103,7 +106,7 @@ if __name__ == "__main__":
     import uvicorn
     
     uvicorn.run(
-        "main:app",
+        "library_catalog.main:app",
         host="0.0.0.0",
         port=8000,
         reload=settings.debug,

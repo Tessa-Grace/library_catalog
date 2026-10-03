@@ -19,11 +19,14 @@ class Settings(BaseSettings):
     openlibrary_timeout: float = 10.0
     openlibrary_max_connections: int = 20
     openlibrary_max_keepalive: int = 10
-    
+    cors_allowed_origins: list[str] = ["http://localhost:3000"]
+    api_key: str
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,
+        extra="ignore",
     )
+    
     
     @property
     def is_production(self) -> bool:
@@ -31,10 +34,9 @@ class Settings(BaseSettings):
     
     @property
     def cors_origins(self) -> list[str]:
-        """CORS origins зависят от environment."""
         if self.environment == "development":
             return ["*"]
-        return ["http://localhost:3000"]
+        return self.cors_allowed_origins
     
     @property
     def cors_allow_credentials(self) -> bool:

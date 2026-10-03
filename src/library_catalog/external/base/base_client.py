@@ -29,14 +29,15 @@ class BaseApiClient(ABC):
         self.timeout = timeout
         self.retries = retries
         self.backoff = backoff
-        self._client = httpx.AsyncClient(
-            timeout=self.timeout,
-            limits=self._limits,
-        )
+
         self.logger = logging.getLogger(self.client_name())
         self._limits = httpx.Limits(
             max_connections=max_connections,
             max_keepalive_connections=max_keepalive_connections,
+        )
+        self._client = httpx.AsyncClient(
+            timeout=self.timeout,
+            limits=self._limits,
         )
     
     @abstractmethod
@@ -100,6 +101,7 @@ class BaseApiClient(ABC):
                 else:
                     self.logger.error(f"HTTP error: {e}")
                     raise
+        raise RuntimeError("retries must be at least 1")
     
     async def _get(self, path: str, **kwargs) -> dict:
         """GET запрос."""

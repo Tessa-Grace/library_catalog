@@ -6,6 +6,11 @@ from .base_repository import BaseRepository
 
 
 class BookRepository(BaseRepository[Book]):
+    updatable_fields = {  # noqa: RUF012
+        "title", "author", "year", "genre",
+        "pages", "available", "isbn", "description",
+    }
+
     def __init__(self, session: AsyncSession):
         super().__init__(session, Book)
     
@@ -33,6 +38,7 @@ class BookRepository(BaseRepository[Book]):
         if available is not None:
             res = res.where(self.model.available == available)
         
+        res = res.order_by(self.model.created_at.desc(), self.model.book_id)
         res = res.limit(limit).offset(offset)
         result = await self.session.execute(res)
         return list(result.scalars().all())

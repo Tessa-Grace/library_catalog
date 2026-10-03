@@ -25,7 +25,11 @@ pytest-asyncio = "^1.4.0"
 black = "^26.5.1"
 ruff = "^0.15.22"
 mypy = "^2.3.0"
+respx = "^0.23.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

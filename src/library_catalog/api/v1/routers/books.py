@@ -3,8 +3,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 
+from ....domain.schemas.book import BookCreateDTO, BookUpdateDTO
 from ...dependencies import BookServiceDep
-from ...domain.schemas.book import BookCreateDTO, BookUpdateDTO
 from ..schemas.book import (
     BookCreate,
     BookFilters,
